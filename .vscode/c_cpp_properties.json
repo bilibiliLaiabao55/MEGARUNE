@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "Genesis",
+            "includePath": [
+                "F:/sgdk/inc"
+            ]
+        }
+    ],
+    "version": 4
+}
