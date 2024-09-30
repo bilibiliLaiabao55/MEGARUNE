@@ -1,4 +1,4 @@
-out/main.o: main.c F:/sgdk/inc/genesis.h F:/sgdk/inc/config.h \
+out/utScript.o: utScript.c F:/sgdk/inc/genesis.h F:/sgdk/inc/config.h \
  F:/sgdk/inc/asm.h F:/sgdk/inc/types.h F:/sgdk/inc/sys.h \
  F:/sgdk/inc/sram.h F:/sgdk/inc/mapper.h F:/sgdk/inc/memory.h \
  F:/sgdk/inc/tools.h F:/sgdk/inc/bmp.h F:/sgdk/inc/maths.h \
@@ -9,4 +9,4 @@ out/main.o: main.c F:/sgdk/inc/genesis.h F:/sgdk/inc/config.h \
  F:/sgdk/inc/vdp_pal.h F:/sgdk/inc/vram.h F:/sgdk/inc/sprite_eng.h \
  F:/sgdk/inc/sound.h F:/sgdk/inc/xgm.h F:/sgdk/inc/z80_ctrl.h \
  F:/sgdk/inc/ym2612.h F:/sgdk/inc/psg.h F:/sgdk/inc/joy.h \
- F:/sgdk/inc/timer.h resource.h
+ F:/sgdk/inc/timer.h
