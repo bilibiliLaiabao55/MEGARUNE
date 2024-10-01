@@ -9,7 +9,6 @@ u32 kris_postion[2] = {0, 0};
 u8 world=0;
 u8 kris_frame=0;
 u8 kris_delay=0;
-u16 TILE_USED = TILE_USERINDEX;
 u16 planescrollx=0;
 u16 planescrolly=0;
 void tick(){
@@ -143,10 +142,10 @@ void draw_battle_back(){
     VDP_clearPlane(BG_A, TRUE);
     VDP_clearPlane(BG_B, TRUE);
     VDP_setPlaneSize(32, 32, FALSE);
-    VDP_setPalette(PAL0, battle_back.palette->data);
+    PAL_setPalette(PAL0, battle_back.palette->data, CPU);
     for(temp0 = 0;temp0<4; ++temp0){
         for(temp1 = 0;temp1<5; ++temp1){
-            VDP_drawImage(BG_A, &battle_back, temp0*8, temp1*8);
+            VDP_drawImageEx(BG_A, &battle_back, TILE_ATTR(PAL0, 0, FALSE, FALSE), temp0*8, temp1*8, FALSE, FALSE);
         }
     }
 }
@@ -158,14 +157,19 @@ void battle_init(){
     XGM_startPlay(mus_battle);
 }
 void battle_logic(){
+    XGM_startPlayPCM(65, 15, SOUND_PCM_CH1);
+    temp0 = 30;
+    while(temp0>0){--temp0;tick();};
     battle_init();
+    XGM_startPlayPCM(66, 15, SOUND_PCM_CH1);
+    XGM_startPlayPCM(67, 15, SOUND_PCM_CH2);
     while(TRUE){
         set_plane_scroll(BG_A, planescrollx-1, planescrolly+1);
         tick();
     }
 }
 
-int main(u16 isHardReset){
+u16 main(u16 isHardReset){
     VDP_init();
     JOY_init();
     SPR_init();
@@ -179,28 +183,27 @@ int main(u16 isHardReset){
     if((isHardReset == TRUE)){
         playCutscences(0);
     }
-    battle_logic();
     SPR_end();
     SPR_init();
+    
     XGM_setPCM(64, snd_appear, 35072);
+    XGM_setPCM(65, snd_battle_start, 11264);
+    XGM_setPCM(66, snd_impact, 8704);
+    XGM_setPCM(67, snd_weaponpull, 15104);
+    XGM_setPCM(68, snd_erun, 17664);
+
+    
     XGM_startPlayPCM(64, 15, SOUND_PCM_CH2);
-    VDP_drawImage(BG_A, &deltarune_logo, 6, 10);
-    TILE_USED += deltarune_logo.tileset->numTile;
+    VDP_drawImageEx(BG_A, &deltarune_logo, TILE_ATTR(PAL0, 0, FALSE, FALSE), 6, 10, FALSE, FALSE);
     PAL_setPalette(PAL0, palette_black, CPU);
-    PAL_fadeIn(0, 15, deltarune_logo.palette->data, 15, TRUE);
-    temp1 = 105;
-    while(temp1 > 0){
-        pad_state = JOY_readJoypad(JOY_1);
-        if((pad_state & BUTTON_START)||(pad_state & BUTTON_A)) temp1 = 0;
-        --temp1;
-        tick();
-    }
+    PAL_fadeIn(0, 63, deltarune_logo.palette->data, 15, TRUE);
+    temp0 = 120-15;
+    while(temp0 > 0){--temp0;tick();}
     VDP_clearPlane(BG_A, TRUE);
-    Sprite* kris = SPR_addSpriteSafe(&spr_kris_d, 0, 0, TILE_ATTR(PAL2, 1, FALSE, FALSE));
-    PAL_setPalette(PAL2, spr_kris_d.palette->data, 16);
+    Sprite* kris = SPR_addSpriteSafe(&spr_kris_d, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
+    PAL_setPalette(PAL1, spr_kris_d.palette->data, 16);
     while(TRUE){
         pad_state = JOY_readJoypad(JOY_1);
-        SPR_clear();
         if(pad_state & BUTTON_UP){
             kris_postion[1]-=2;
             SPR_setHFlip(kris, FALSE);
@@ -235,6 +238,7 @@ int main(u16 isHardReset){
         }
         SPR_setPosition(kris, kris_postion[0], kris_postion[1]);
         SPR_update();
+        battle_logic();
         tick();
     }
     return 0;

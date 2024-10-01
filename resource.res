@@ -10,3 +10,6 @@ XGM mus_battle "res/battle.vgm" 0
 
 WAV snd_erun "res/snd_erun.wav" 5
 WAV snd_appear "res/snd_appear.wav" 5
+WAV snd_weaponpull "res/snd_weaponpull.wav" 5
+WAV snd_battle_start "res/snd_battle_start.wav" 5
+WAV snd_impact "res/snd_impact.wav" 5

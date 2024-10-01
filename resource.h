@@ -3,6 +3,9 @@
 
 extern const u8 snd_erun[17664];
 extern const u8 snd_appear[35072];
+extern const u8 snd_weaponpull[15104];
+extern const u8 snd_battle_start[11264];
+extern const u8 snd_impact[8704];
 extern const u8 MUS_AUDIO_DRONE[1024];
 extern const u8 mus_story[2816];
 extern const u8 mus_battle[1792];
