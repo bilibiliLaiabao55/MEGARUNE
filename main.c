@@ -7,8 +7,9 @@ const u16 krisroomrect[4][4]={
     {0, 0, 0, 0},
     {0, 0, 0, 0}
 };
-u16 temp0=0;
-u16 temp1=0;
+s32 temp0=0;
+s32 temp1=0;
+s32 temp2=0;
 u8 pad_state = 0;
 u16 kris_postion[2] = {0, 0};
 u16 susie_postion[2] = {0, 0};
@@ -63,7 +64,7 @@ void drawTextUT(VDPPlane plane, const char* text, u16 x, u16 y, u16 delay){
 }
 void playCutscences(u8 cutscences){
     if(cutscences==0){
-        PAL_setPalette(PAL1, heart_sprite_intro.palette->data, DMA);
+        PAL_setPalette(PAL1, heart_sprite_intro.palette->data, DMA_QUEUE);
         u8 line = 0;
         SND_startPlay_XGM(MUS_AUDIO_DRONE);
         VDP_clearPlane(BG_A, TRUE);
@@ -84,17 +85,39 @@ void playCutscences(u8 cutscences){
                     drawTextUT(BG_B, "CONNECTED?", 14, 11, 5);
                 }
                 else if(line == 2){
-                    temp0 = 0+16;
+                    temp0 = 0;
+                    temp1 = 0;
+                    temp2 = 0;
                     while(TRUE){
-                        if((temp0 >= 105)||(pad_state & BUTTON_B)){
-                            temp0 = 110;
-                            SPR_setPosition(heart, 145+8, temp0);
-                            SPR_update();
+                        pad_state=JOY_readJoypad(JOY_1);
+                        temp0++;
+                        temp1++;
+                        temp2++;
+                        if(temp2==4)temp2=0;
+                        if(temp0>152)temp0=152;
+                        if(temp1>114)temp1=114;
+                        switch (temp2)
+                        {
+                        case 0:
+                            SPR_setPosition(heart, temp0, 114);
+                            break;
+                        case 1:
+                            SPR_setPosition(heart, 152, temp1);
+                            break;
+                        case 2:
+                            SPR_setPosition(heart, 304-temp0, 114);
+                            break;
+                        case 3:
+                            SPR_setPosition(heart, 152, 228-temp1);
                             break;
                         }
-                        temp0 += (110-temp0)/6;
-                        SPR_setPosition(heart, 145+8, temp0);
+                        if(pad_state&BUTTON_B){
+                            temp0=152;
+                            temp1=114;
+                            break;
+                        }
                         SPR_update();
+                        if((temp0==152)&&(temp1==114))break;
                         tick();
                     }
                 }
@@ -109,14 +132,39 @@ void playCutscences(u8 cutscences){
                     drawTextUT(BG_B, "WE MAY", 17, 8, 5);
                     drawTextUT(BG_B, "BEGIN.", 17, 9, 5);
                 }else if(line == 7){
-                    temp0 = 105+16;
+                    temp0=152;
+                    temp1=114;
+                    temp2=0;
                     while(TRUE){
-                        if((temp0 <= 5)||(pad_state&BUTTON_B)){
-                            temp0 = 0;
+                        pad_state=JOY_readJoypad(JOY_1);
+                        temp0--;
+                        temp1--;
+                        temp2++;
+                        if(temp2==4)temp2=0;
+                        if(temp0<0)temp0=0;
+                        if(temp1<0)temp1=0;
+                        switch (temp2)
+                        {
+                        case 0:
+                            SPR_setPosition(heart, temp0, 114);
+                            break;
+                        case 1:
+                            SPR_setPosition(heart, 152, temp1);
+                            break;
+                        case 2:
+                            SPR_setPosition(heart, 304-temp0, 114);
+                            break;
+                        case 3:
+                            SPR_setPosition(heart, 152, 228-temp1);
                             break;
                         }
-                        temp0 += (0-temp0)/6;
-                        SPR_setPosition(heart, 145+8, temp0);
+                        if(pad_state&BUTTON_B){
+                            temp0=0;
+                            temp1=0;
+                            break;
+                        }
+                        SPR_update();
+                        if((temp0==0)&&(temp1==0))break;
                         SPR_update();
                         tick();
                     }
@@ -161,11 +209,11 @@ void play_ralsei_anim(){
 void draw_battle_back(){
     VDP_clearPlane(BG_A, TRUE);
     VDP_clearPlane(BG_B, TRUE);
-    VDP_setPlaneSize(32, 32, TRUE);
-    PAL_setPalette(PAL0, battle_back.palette->data, DMA);
+    VDP_setPlaneSize(32, 32, FALSE);
+    PAL_setPalette(PAL0, battle_back.palette->data, DMA_QUEUE);
     for(temp0 = 0;temp0<4; ++temp0){
         for(temp1 = 0;temp1<5; ++temp1){
-            VDP_drawImageEx(BG_A, &battle_back, TILE_ATTR(PAL0, 0, FALSE, FALSE), temp0*8, temp1*8, FALSE, FALSE);
+            VDP_drawImageEx(BG_A, &battle_back, TILE_ATTR(PAL0, 0, FALSE, FALSE), temp0*8, temp1*8, FALSE, TRUE);
         }
     }
 }
@@ -177,10 +225,10 @@ void battle_init(){
     SND_startPlay_XGM(mus_battle);
 }
 void battle_logic(){
-    SND_startPlay_PCM(snd_battle_start, 10752, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
+    SND_startPlay_PCM(snd_battle_start, 6400, SOUND_RATE_8000, SOUND_PAN_CENTER, 0);
     temp0 = 30;
     while(temp0>0){--temp0;tick();}
-    SND_startPlay_PCM(snd_weaponpull, 14592, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
+    SND_startPlay_PCM(snd_weaponpull, 8704, SOUND_RATE_8000, SOUND_PAN_CENTER, 0);
     u16 kris_postion2[2]={0, 0};
     kris_postion2[0] = kris_postion[0];
     kris_postion2[1] = kris_postion[1];
@@ -238,6 +286,17 @@ void init_all(){
     JOY_init();
     SPR_init();
 }
+void pause_menu(){
+    if(world == 0){
+        VDP_drawImageEx(WINDOW, &battle_back, TILE_ATTR(PAL0, 0, FALSE, FALSE), 1, 1, FALSE, TRUE);
+        while(TRUE){
+            pad_state = JOY_readJoypad(JOY_1);
+            if(pad_state & BUTTON_C){
+                
+            }
+        }
+    }
+}
 int main(u16 isHardReset){
     init_all();
     if(!((JOY_getJoypadType(JOY_1)==JOY_TYPE_PAD6)||(JOY_getJoypadType(JOY_1)==JOY_TYPE_PAD3))){
@@ -252,7 +311,7 @@ int main(u16 isHardReset){
     }
     SPR_end();
     SPR_init();
-    SND_startPlay_PCM(snd_appear, 33536, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
+    SND_startPlay_PCM(snd_appear, 20224, SOUND_RATE_8000, SOUND_PAN_CENTER, 0);
     VDP_drawImageEx(BG_A, &deltarune_logo, TILE_ATTR(PAL0, 0, FALSE, FALSE), 6, 10, FALSE, FALSE);
     PAL_setPalette(PAL0, palette_black, DMA);
     PAL_fadeIn(0, 63, deltarune_logo.palette->data, 15, TRUE);
@@ -261,22 +320,23 @@ int main(u16 isHardReset){
     VDP_clearPlane(BG_A, TRUE);
 
     kris = SPR_addSpriteSafe(&spr_kris, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
-    PAL_setPalette(PAL1, spr_kris.palette->data, DMA);
+    PAL_setPalette(PAL1, spr_kris.palette->data, DMA_QUEUE);
     if(susie_in_party){
         susie = SPR_addSpriteSafe(&spr_susie, 0, 0, TILE_ATTR(PAL2, 1, FALSE, FALSE));
-        PAL_setPalette(PAL2, spr_susie.palette->data, DMA);
+        PAL_setPalette(PAL2, spr_susie.palette->data, DMA_QUEUE);
         SPR_setAlwaysOnTop(susie, TRUE);
     }
     if(ralsei_in_party){
         ralsei = SPR_addSpriteSafe(&spr_ralsei, 0, 0, TILE_ATTR(PAL3, 1, FALSE, FALSE));
-        PAL_setPalette(PAL3, spr_ralsei.palette->data, DMA);
+        PAL_setPalette(PAL3, spr_ralsei.palette->data, DMA_QUEUE);
         SPR_setAlwaysOnTop(ralsei, TRUE);
     }
     SPR_setAlwaysOnTop(kris, TRUE);
-
     VDP_setPlaneSize(128, 128, TRUE);
-    PAL_setPalette(PAL0, rb_krisroom.palette->data, DMA);
-    VDP_drawImageEx(BG_A, &rb_krisroom, TILE_ATTR(PAL0, 0, FALSE, FALSE), 0, 0, TRUE, FALSE);
+    set_plane_scroll(WINDOW, 0, 0);
+    battle_logic();
+    PAL_setPalette(PAL0, rb_krisroom.palette->data, DMA_QUEUE);
+    VDP_drawImageEx(BG_A, &rb_krisroom, TILE_ATTR(PAL0, 0, FALSE, FALSE), 0, 0, TRUE, TRUE);
     while(TRUE){
         pad_state = JOY_readJoypad(JOY_1);
         if(pad_state & BUTTON_LEFT){
@@ -307,7 +367,7 @@ int main(u16 isHardReset){
             SPR_setHFlip(kris, FALSE);
             SPR_setAnim(kris, 3-world*3);
         }
-        if(pad_state & BUTTON_C) battle_logic();
+        if(pad_state & BUTTON_C) pause_menu();
         SPR_setFrame(kris, main_character_frames[kris_frame]);
         if(!(pad_state & BUTTON_DIR)){
             kris_frame = 0;

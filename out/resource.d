@@ -11,6 +11,7 @@ res/snd_impact.wav \
 res/spr_ralsei.png \
 res/IMAGE_LOGO.png \
 res/AUDIO_DRONE.vgm \
+res/dontforget.wav \
 res/snd_battle_start.wav \
 res/legand.vgm \
 res/bg_myroom.png
