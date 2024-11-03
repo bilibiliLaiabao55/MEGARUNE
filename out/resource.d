@@ -8,6 +8,8 @@ res/snd_appear.wav \
 res/spr_heart_intro.png \
 res/snd_erun.wav \
 res/snd_impact.wav \
+res/text_box.png \
+res/snd_tor.wav \
 res/spr_ralsei.png \
 res/IMAGE_LOGO.png \
 res/AUDIO_DRONE.vgm \

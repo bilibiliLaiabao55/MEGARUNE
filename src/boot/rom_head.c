@@ -8,8 +8,8 @@ const ROMHeader rom_header = {
     "SEGA MEGA DRIVE ",
 #endif
     "(C)LAIABAO 2024 ",
-    "DELTARUNE FOR MEGA DRIVE BY LAIABAO             ",
-    "DELTARUNE FOR MEGA DRIVE BY LAIABAO             ",
+    "MEGARUNE CHAPTER 1                              ",
+    "MEGARUNE CHAPTER 1                              ",
     "GM 00000000-00",
     0x000,
     "JD              ",
