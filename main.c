@@ -1,5 +1,11 @@
 #include <genesis.h>
 #include "resource.h"
+const s8 room_mode[]={
+    0
+};
+const Image *room_map_image_pointer[]={
+    &rb_krisroom
+};
 const u8 main_character_frames[4]={0, 1 , 0, 2};
 const u16 krisroomrect[4][4]={
     {0, 0, 0, 0},
@@ -11,6 +17,7 @@ s32 temp0=0;
 s32 temp1=0;
 s32 temp2=0;
 u8 pad_state = 0;
+u16 room=0;
 u16 kris_postion[2] = {0, 0};
 u16 susie_postion[2] = {0, 0};
 u16 ralsei_postion[2] = {0, 0};
@@ -40,7 +47,28 @@ void set_plane_scroll(VDPPlane plane, u16 scrollx, u16 scrolly){
     VDP_setHorizontalScroll(plane, scrollx);
     VDP_setVerticalScroll(plane, scrolly);
 }
-
+void drawTextUTSound(VDPPlane plane, const char* text, u16 x, u16 y, u16 delay, const u8 *sound_p, u32 sound_l){
+    u16 timerDelay = 0;
+    u16 len = 0;
+    u8 temp = 0;
+    while (text[len] != '\0') len++;
+    for(temp = 0;temp<len; ++temp){
+        if(JOY_readJoypad(JOY_1) & BUTTON_B){
+            VDP_drawTextBG(plane, text, x, y);
+            break;
+        }
+        char this;
+        memcpy(&this, &text[temp], 1);
+        VDP_drawTextBG(plane, &this, x+temp, y);
+        SND_startPlay_PCM(sound_p, sound_l, SOUND_RATE_8000, SOUND_PAN_CENTER, 0);
+        while(timerDelay > 0){
+            --timerDelay;
+            tick();
+        }
+        timerDelay = delay;
+        tick();
+    }
+}
 void drawTextUT(VDPPlane plane, const char* text, u16 x, u16 y, u16 delay){
     u16 timerDelay = 0;
     u16 len = 0;
@@ -60,6 +88,12 @@ void drawTextUT(VDPPlane plane, const char* text, u16 x, u16 y, u16 delay){
         }
         timerDelay = delay;
         tick();
+    }
+}
+void draw_room(){
+    if((room_mode[room])==0){
+        PAL_setPalette(PAL0, room_map_image_pointer[room]->palette->data, DMA_QUEUE);
+        VDP_drawImageEx(BG_B, room_map_image_pointer[room], TILE_ATTR(PAL0, 0, FALSE, FALSE), 0, 0, TRUE, TRUE);
     }
 }
 void playCutscences(u8 cutscences){
@@ -96,6 +130,10 @@ void playCutscences(u8 cutscences){
                         if(temp2==4)temp2=0;
                         if(temp0>152)temp0=152;
                         if(temp1>114)temp1=114;
+                        if(pad_state & BUTTON_B){
+                            temp0=152;
+                            temp1=114;
+                        }
                         switch (temp2)
                         {
                         case 0:
@@ -109,11 +147,6 @@ void playCutscences(u8 cutscences){
                             break;
                         case 3:
                             SPR_setPosition(heart, 152, 228-temp1);
-                            break;
-                        }
-                        if(pad_state&BUTTON_B){
-                            temp0=152;
-                            temp1=114;
                             break;
                         }
                         SPR_update();
@@ -143,6 +176,10 @@ void playCutscences(u8 cutscences){
                         if(temp2==4)temp2=0;
                         if(temp0<0)temp0=0;
                         if(temp1<0)temp1=0;
+                        if(pad_state & BUTTON_B){
+                            temp0=0;
+                            temp1=0;
+                        }
                         switch (temp2)
                         {
                         case 0:
@@ -158,14 +195,8 @@ void playCutscences(u8 cutscences){
                             SPR_setPosition(heart, 152, 228-temp1);
                             break;
                         }
-                        if(pad_state&BUTTON_B){
-                            temp0=0;
-                            temp1=0;
-                            break;
-                        }
                         SPR_update();
                         if((temp0==0)&&(temp1==0))break;
-                        SPR_update();
                         tick();
                     }
                     SPR_releaseSprite(heart);
@@ -182,6 +213,29 @@ void playCutscences(u8 cutscences){
             tick();
         }
         XGM_stopPlay();
+    }
+    if(cutscences==1){
+        temp0=0;
+        temp1=TRUE;
+        SPR_reset();
+        while(TRUE){
+            pad_state = JOY_readJoypad(JOY_1);
+            if(temp1){
+                temp1=FALSE;
+                VDP_drawImageEx(BG_A, &text_box, TILE_ATTR(PAL3, 0, FALSE, FALSE), 2, 15, FALSE, FALSE);
+                switch(temp0){
+                    case 0:
+                        drawTextUTSound(BG_A, "* Kris!", 3, 18, 1, snd_toriel, 768);
+                        break;
+                    case 1:
+                        drawTextUTSound(BG_A, "* Kris! Wake up!", 3, 18, 1, snd_toriel, 768);
+                        break;
+                }
+                ++temp0;
+            }
+            if(pad_state & BUTTON_A)temp1=TRUE;
+            tick();
+        }
     }
 }
 void play_kris_anim(){
@@ -285,6 +339,7 @@ void init_all(){
     VDP_resetSprites();
     JOY_init();
     SPR_init();
+    setRandomSeed((IS_PALSYSTEM*5-4)/3);
 }
 void pause_menu(){
     if(world == 0){
@@ -309,6 +364,20 @@ int main(u16 isHardReset){
     if((isHardReset == TRUE)){
         playCutscences(0);
     }
+    SRAM_enableRO();
+    temp0=SRAM_readByte(0);
+    SRAM_disable();
+    if((IS_PALSYSTEM)&&(temp0==0)){
+        VDP_drawText("You are useing a pal TV!", 6 ,12);
+        VDP_drawText("Somthing might be wrong!", 6 ,13);
+        VDP_drawText("Press any to continue", 6 ,13);
+        while(!(JOY_readJoypad(JOY_1) & BUTTON_ALL)){
+            tick();
+        }
+        SRAM_enable();
+        SRAM_writeByte(0, random());
+        SRAM_disable();
+    }
     SPR_end();
     SPR_init();
     SND_startPlay_PCM(snd_appear, 20224, SOUND_RATE_8000, SOUND_PAN_CENTER, 0);
@@ -318,25 +387,25 @@ int main(u16 isHardReset){
     temp0 = 120-15;
     while(temp0 > 0){--temp0;tick();}
     VDP_clearPlane(BG_A, TRUE);
-
+    VDP_setTextPalette(PAL3);
     kris = SPR_addSpriteSafe(&spr_kris, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
     PAL_setPalette(PAL1, spr_kris.palette->data, DMA_QUEUE);
+    PAL_setPalette(PAL2, spr_susie.palette->data, DMA_QUEUE);
+    PAL_setPalette(PAL3, spr_ralsei.palette->data, DMA_QUEUE);
     if(susie_in_party){
         susie = SPR_addSpriteSafe(&spr_susie, 0, 0, TILE_ATTR(PAL2, 1, FALSE, FALSE));
-        PAL_setPalette(PAL2, spr_susie.palette->data, DMA_QUEUE);
         SPR_setAlwaysOnTop(susie, TRUE);
     }
     if(ralsei_in_party){
         ralsei = SPR_addSpriteSafe(&spr_ralsei, 0, 0, TILE_ATTR(PAL3, 1, FALSE, FALSE));
-        PAL_setPalette(PAL3, spr_ralsei.palette->data, DMA_QUEUE);
         SPR_setAlwaysOnTop(ralsei, TRUE);
     }
     SPR_setAlwaysOnTop(kris, TRUE);
     VDP_setPlaneSize(128, 128, TRUE);
     set_plane_scroll(WINDOW, 0, 0);
-    battle_logic();
-    PAL_setPalette(PAL0, rb_krisroom.palette->data, DMA_QUEUE);
-    VDP_drawImageEx(BG_A, &rb_krisroom, TILE_ATTR(PAL0, 0, FALSE, FALSE), 0, 0, TRUE, TRUE);
+    //battle_logic();
+    playCutscences(1);
+    draw_room();
     while(TRUE){
         pad_state = JOY_readJoypad(JOY_1);
         if(pad_state & BUTTON_LEFT){
