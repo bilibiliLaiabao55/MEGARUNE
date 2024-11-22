@@ -6,8 +6,9 @@ res/spr_kris.png \
 res/battle_back.png \
 res/snd_appear.wav \
 res/spr_heart_intro.png \
+res/bg_torhouse.png \
 res/snd_erun.wav \
-res/snd_impact.wav \
+res/bg_myhallway.png \
 res/text_box.png \
 res/snd_tor.wav \
 res/spr_ralsei.png \
