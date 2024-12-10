@@ -14,6 +14,7 @@ res/snd_tor.wav \
 res/spr_ralsei.png \
 res/IMAGE_LOGO.png \
 res/AUDIO_DRONE.vgm \
+res/checkerbattle.vgm \
 res/dontforget.wav \
 res/snd_battle_start.wav \
 res/legand.vgm \

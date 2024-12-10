@@ -10,7 +10,7 @@ const ROMHeader rom_header = {
     "(C)LAIABAO 2024 ",
     "MEGARUNE CHAPTER 1                              ",
     "MEGARUNE CHAPTER 1                              ",
-    "GM 00000000-00",
+    "GM 00000055-00",
     0x000,
     "JD              ",
     0x00000000,

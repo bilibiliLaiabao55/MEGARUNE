@@ -16,6 +16,7 @@
     .org    0x00000000
 
 _Start_Of_Rom:
+
 _Vecteurs_68K:
         dc.l    0x00000000              /* Stack address */
         dc.l    _Entry_Point            /* Program start address */
@@ -41,7 +42,6 @@ _Vecteurs_68K:
         dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
         dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
         dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
-
 rom_header:
         .incbin "out/rom_head.bin", 0x10, 0x100
 

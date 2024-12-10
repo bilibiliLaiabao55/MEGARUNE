@@ -1,0 +1,25 @@
+_Vecteurs_68K:
+        dc.l    0x00000000              /* Stack address */
+        dc.l    _Entry_Point            /* Program start address */
+        dc.l    _Bus_Error
+        dc.l    _Address_Error
+        dc.l    _Illegal_Instruction
+        dc.l    _Zero_Divide
+        dc.l    _Chk_Instruction
+        dc.l    _Trapv_Instruction
+        dc.l    _Privilege_Violation
+        dc.l    _Trace
+        dc.l    _Line_1010_Emulation
+        dc.l    _Line_1111_Emulation
+        dc.l     _Error_Exception, _Error_Exception, _Error_Exception, _Error_Exception
+        dc.l     _Error_Exception, _Error_Exception, _Error_Exception, _Error_Exception
+        dc.l     _Error_Exception, _Error_Exception, _Error_Exception, _Error_Exception
+        dc.l    _Error_Exception, _INT, _EXTINT, _INT
+        dc.l    _HINT
+        dc.l    _INT
+        dc.l    _VINT
+        dc.l    _INT
+        dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
+        dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
+        dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
+        dc.l    _INT,_INT,_INT,_INT,_INT,_INT,_INT,_INT
