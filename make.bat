@@ -1,4 +1,4 @@
 @echo off
-F:/sgdk/bin/make.exe -f F:/sgdk/makefile.gen
+G:/sgdk/bin/make.exe -f G:/sgdk/makefilewithmmd.gen
 cd out
 rom.bin

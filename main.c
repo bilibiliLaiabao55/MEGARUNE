@@ -5,19 +5,24 @@
 #define story_been_sram_offset 2
 #define room_sram_offset 2
 const Palette *room_palette_pointer[]={
-    &rb_krisroom_pal, &rb_krishallway_pal, &rb_torhouse_pal
+    &rb_krisroom_pal, 
+    &rb_krishallway_pal,
+     &rb_torhouse_pal
 };
-
 const TileSet *room_tileset_pointer[]={
-    &rb_krisroom_tilset, &rb_krishallway_tilset, &rb_torhouse_tilset
+    &rb_krisroom_tilset, 
+    &rb_krishallway_tilset, 
+    &rb_torhouse_tilset
 };
-
-const Map *room_map_pointer[]={
-    &rb_krisroom_map, &rb_krishallway_map, &rb_torhouse_map
+const MapDefinition *room_map_pointer[]={
+    &rb_krisroom_map, 
+    &rb_krishallway_map, 
+    &rb_torhouse_map
 };
-
-const u8 room_door_box_num[][2]={
-    {0, 0}, {1, 2}, {3, 3}
+const s8 room_door_box_num[][2]={
+    {0, 0}, 
+    {1, 2}, 
+    {3, 3}
 };
 const s32 room_door_rects[][7]={
     //my room
@@ -26,84 +31,91 @@ const s32 room_door_rects[][7]={
     {282, 125, 32, 16, 0, 0, 0},
     {418, 59, 40, 52, 2, 0, 0},
     //toriel house
-    {282, 125, 32, 16, 1, 0, 0}
+    {132, 125, 32, 16, 1, 0, 0}
 };
-const u8 main_character_frames[4]={0, 1, 0, 2};
+const s32 room_max_scroll[][2]={
+    {0, 0}, 
+    {224, 0}, 
+    {392, 0}
+};
 s32 temp0=0;
 s32 temp1=0;
 s32 temp2=0;
 u8 pad_state = 0;
 u16 room=0;
-s16 kris_postion[2] = {0, 0};
-s16 susie_postion[2] = {0, 0};
-s16 ralsei_postion[2] = {0, 0};
-u8 kris_frame=0;
-u8 susie_frame=0;
-u8 ralsei_frame=0;
-u8 kris_delay=0;
-u8 susie_delay=0;
-u8 ralsei_delay=0;
+s32 kris_postion[2] = {0, 0};
+s32 susie_postion[2] = {0, 0};
+s32 ralsei_postion[2] = {0, 0};
+u8 kris_fliped=0;
 u8 kris_face = 0;
+u8 susie_face = 0;
+u8 ralsei_face = 0;
 u8 world=0;
 u16 planescrollx=0;
 u16 planescrolly=0;
-bool susie_in_party = FALSE;
-bool ralsei_in_party = FALSE;
+bool susie_in_party = TRUE;
+bool ralsei_in_party = TRUE;
 Sprite* kris = NULL;
 Sprite* susie = NULL;
 Sprite* ralsei = NULL;
 Map* map = NULL;
 void tick(){
-    VDP_waitVSync();
     SYS_doVBlankProcess();
+    VDP_waitVSync();
 }
 void set_scroll(){
-    if((kris_postion[0]-145)>=0){
+    if(((kris_postion[0]-145)>=0)&&((kris_postion[0]-145)<=room_max_scroll[room][0])){
         planescrollx=kris_postion[0]-145;
     }
-    if((kris_postion[1]-100)>=0){
+    if(((kris_postion[1]-100)>=0)&&((kris_postion[1]-100)<=room_max_scroll[room][1])){
         planescrolly=kris_postion[1]-100;
     }
-    VDP_setHorizontalScroll(BG_B, -planescrollx);
-    VDP_setVerticalScroll(BG_B, planescrolly);
+    if((kris_postion[0]-145)<0)planescrollx=0;
+    if((kris_postion[1]-100)<0)planescrolly=0;
+    if((kris_postion[0]-145)>room_max_scroll[room][0])planescrollx = room_max_scroll[room][0];
+    if((kris_postion[1]-100)>room_max_scroll[room][1])planescrolly = room_max_scroll[room][1];
+    MAP_scrollTo(map, planescrollx, planescrolly);
+    VDP_setTileMapDataColumnFast(BG_B, map->blocks, 0, 0, 0, DMA);
+    VDP_setTileMapDataRow(BG_B, map->blocks, 0, 0, 0, DMA);
 }
 //room functions
 void draw_room(u8 set_pal){
-    VDP_setPlaneSize(128, 128, TRUE);
+    VDP_setHorizontalScroll(BG_B, 0);
+    VDP_setVerticalScroll(BG_B, 0);
     MEM_free(map);
+    if(set_pal)PAL_setPalette(PAL0, room_palette_pointer[room]->data, DMA);
+    VDP_loadTileSet(room_tileset_pointer[room], 0, DMA);
     map = MAP_create(room_map_pointer[room], BG_B, TILE_ATTR(PAL0, 0, 0, 0));
-    //if(set_pal)PAL_setPalette(PAL0, room_palette_pointer[room]->data, DMA);
-    //VDP_loadTileSet(room_tileset_pointer[room], 0, DMA);
+    set_scroll();
 }
 
 void door_collision(){
-    for(u16 i=room_door_box_num[room][0];i<=room_door_box_num[room][1]; ++i){
-        if(kris_postion[0]>room_door_rects[i][0]){
-            if(kris_postion[0]<(room_door_rects[i][0]+room_door_rects[i][2])){
-                if((kris_postion[1]+48)>(room_door_rects[i][1])){
-                    if((kris_postion[1]+48)<(room_door_rects[i][1]+room_door_rects[i][3])){
-                        PAL_fadeOutAll(10, FALSE);
-                        for(u16 j=0;j<15;++j)tick();
-                        kris_postion[0]=room_door_rects[i][5];
-                        kris_postion[1]=room_door_rects[i][6];
-                        susie_postion[0]=room_door_rects[i][5];
-                        susie_postion[1]=room_door_rects[i][6];
-                        ralsei_postion[0]=room_door_rects[i][5];
-                        ralsei_postion[1]=room_door_rects[i][6];
-                        planescrollx=0;
-                        planescrolly=0;
-                        room=room_door_rects[i][4];
-                        set_scroll();
-                        SPR_setPosition(kris, kris_postion[0]-planescrollx, kris_postion[1]-planescrolly);
-                        SPR_setPosition(susie, susie_postion[0]-planescrollx, susie_postion[1]-planescrolly);
-                        SPR_setPosition(ralsei, ralsei_postion[0]-planescrollx, ralsei_postion[1]-planescrolly);
-                        SPR_update();
-                        draw_room(FALSE);
-                        PAL_fadeIn(0, 15, room_palette_pointer[room]->data, 10, FALSE);
-                        PAL_fadeIn(16, 31, spr_kris.palette->data, 10, FALSE);
-                        PAL_fadeIn(32, 47, spr_susie.palette->data, 10, FALSE);
-                        PAL_fadeIn(48, 63, spr_ralsei.palette->data, 10, FALSE);
-                        break;
+    if(room_door_rects[room][0]>0){
+        for(u16 i=room_door_box_num[room][0];i<=room_door_box_num[room][1]; ++i){
+            if(kris_postion[0]+8>room_door_rects[i][0]){
+                if(kris_postion[0]+8<(room_door_rects[i][0]+room_door_rects[i][2])){
+                    if((kris_postion[1]+56)>(room_door_rects[i][1])){
+                        if((kris_postion[1]+56)<(room_door_rects[i][1]+room_door_rects[i][3])){
+                            PAL_fadeOutAll(10, FALSE);
+                            for(u16 j=0;j<15;++j)tick();
+                            kris_postion[0]=room_door_rects[i][5];
+                            kris_postion[1]=room_door_rects[i][6];
+                            susie_postion[0]=room_door_rects[i][5];
+                            susie_postion[1]=room_door_rects[i][6];
+                            ralsei_postion[0]=room_door_rects[i][5];
+                            ralsei_postion[1]=room_door_rects[i][6];
+                            room=room_door_rects[i][4];
+                            SPR_setPosition(kris, kris_postion[0]-planescrollx, kris_postion[1]-planescrolly);
+                            SPR_setPosition(susie, susie_postion[0]-planescrollx, susie_postion[1]-planescrolly);
+                            SPR_setPosition(ralsei, ralsei_postion[0]-planescrollx, ralsei_postion[1]-planescrolly);
+                            SPR_update();
+                            draw_room(FALSE);
+                            set_scroll();
+                            PAL_fadeIn(0, 15, room_palette_pointer[room]->data, 10, FALSE);
+                            PAL_fadeIn(16, 29, spr_kris.palette->data, 10, FALSE);
+                            PAL_fadeIn(32, 47, spr_ralsei.palette->data, 10, FALSE);
+                            break;
+                        }
                     }
                 }
             }
@@ -234,6 +246,7 @@ void playCutscences(u8 cutscences){
                         temp2++;
                         tick();
                     }
+                    MEM_free(heart);
                     SPR_releaseSprite(heart);
                     SPR_clear();
                 }else if(line == 8){
@@ -260,7 +273,7 @@ void playCutscences(u8 cutscences){
             pad_state = JOY_readJoypad(JOY_1);
             if(pad_state & BUTTON_A)temp1 = TRUE;
             if(temp1==TRUE){
-                VDP_drawImageEx(BG_A, &text_box, TILE_ATTR(PAL3, 0, FALSE, FALSE), 2, 15, FALSE, FALSE);
+                VDP_drawImageEx(BG_A, &text_box, TILE_ATTR(PAL2, 0, FALSE, FALSE), 2, 15, FALSE, FALSE);
                 switch(temp0){
                     case 0:
                         drawTextUT(BG_A, "* Kris!", 3, 18, 1, TRUE, snd_toriel, 1280);
@@ -286,35 +299,14 @@ void playCutscences(u8 cutscences){
         kris_postion[1]=100;
         SPR_setAnim(kris, 4);
         SPR_setHFlip(kris, TRUE);
+        kris_fliped=TRUE;
         PAL_fadeTo(0, 15, room_palette_pointer[room]->data, 10, TRUE);
     }
 }
-void play_kris_anim(){
-    if(kris_delay==0){
-        kris_delay = 8;
-        ++kris_frame;
-        if(kris_frame==4) kris_frame = 0;
-    }else --kris_delay;
-}
-void play_susie_anim(){
-    if(susie_delay==0){
-        susie_delay = 8;
-        ++susie_frame;
-        if(susie_frame==4) susie_frame = 0;
-    }else --susie_delay;
-}
-void play_ralsei_anim(){
-    if(ralsei_delay==0){
-        ralsei_delay = 8;
-        ++ralsei_frame;
-        if(ralsei_frame==4) ralsei_frame = 0;
-    }else --ralsei_delay;
-}
-
 void draw_battle_back(){
+    VDP_setPlaneSize(32, 32, FALSE);
     VDP_clearPlane(BG_A, TRUE);
     VDP_clearPlane(BG_B, TRUE);
-    VDP_setPlaneSize(32, 32, FALSE);
     PAL_setPalette(PAL0, battle_back.palette->data, CPU);
     for(temp0 = 0;temp0<4; ++temp0){
         for(temp1 = 0;temp1<5; ++temp1){
@@ -329,11 +321,14 @@ void battle_init(){
     VDP_setHorizontalScroll(BG_A, 0);
     VDP_setVerticalScroll(BG_A, 0);
     draw_battle_back();
-    SND_startPlay_XGM(mus_battle);
+    XGM_startPlay(mus_checkerbattle);
 }
 void battle_logic(){
     SND_startPlay_PCM(snd_battle_start, 10752, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
-    temp0 = 30;
+    temp0 = 8;
+    while(temp0>0){--temp0;tick();}
+    SND_startPlay_PCM(snd_battle_start2, 9728, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
+    temp0 = 22;
     while(temp0>0){--temp0;tick();}
     SND_startPlay_PCM(snd_weaponpull, 14592, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
     u16 kris_postion2[2]={0, 0};
@@ -354,6 +349,12 @@ void battle_logic(){
     u16 ralsei_to_speed_x = 0;
     u16 ralsei_to_speed_y = 0;  
     temp0 = 15;
+    SPR_setHFlip(kris, FALSE);
+    SPR_setHFlip(ralsei, FALSE);
+    SPR_setHFlip(susie, FALSE);
+    //SPR_setAnim(kris, 13);
+    SPR_setAnim(ralsei, 7);
+    //SPR_setAnim(susie, 13);
     while(temp0>0){
         kris_to_speed_x = (0-kris_postion2[0])/temp0;
         kris_to_speed_y = (30-kris_postion2[1])/temp0;
@@ -390,14 +391,29 @@ void battle_logic(){
     }
 }
 void init_all(){
+    PSG_init();
     VDP_init();
     VDP_resetScreen();
     VDP_resetSprites();
+    VDP_setHilightShadow(0);
     JOY_init();
     SPR_init();
     VDP_setHorizontalScroll(BG_A, 0);
     VDP_setVerticalScroll(BG_A, 3);
     setRandomSeed((IS_PALSYSTEM*5-4)/3);
+}
+void put_sprs(){
+    kris = SPR_addSpriteSafe(&spr_kris, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
+    PAL_setPalette(PAL1, spr_kris.palette->data, DMA);
+    PAL_setPalette(PAL2, spr_ralsei.palette->data, DMA);
+    if(susie_in_party){
+        susie = SPR_addSpriteSafe(&spr_susie, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
+        SPR_setAlwaysOnTop(susie, TRUE);
+    }
+    if(ralsei_in_party){
+        ralsei = SPR_addSpriteSafe(&spr_ralsei, 0, 0, TILE_ATTR(PAL2, 1, FALSE, FALSE));
+        SPR_setAlwaysOnTop(ralsei, TRUE);
+    }
 }
 void pause_menu(){
     if(world == 0){
@@ -405,7 +421,7 @@ void pause_menu(){
         while(TRUE){
             pad_state = JOY_readJoypad(JOY_1);
             if(pad_state & BUTTON_C){
-                
+                break;
             }
         }
     }
@@ -439,8 +455,6 @@ int main(u16 isHardReset){
         SRAM_writeByte(pal_do_sram_offset, 1);
         SRAM_disable();
     }
-    SPR_end();
-    SPR_init();
     SND_startPlay_PCM(snd_appear, 33536, SOUND_RATE_13400, SOUND_PAN_CENTER, 0);
     VDP_drawImageEx(BG_A, &deltarune_logo, TILE_ATTR(PAL0, 0, FALSE, FALSE), 6, 10, FALSE, FALSE);
     PAL_setPalette(PAL0, palette_black, CPU);
@@ -448,155 +462,140 @@ int main(u16 isHardReset){
     temp0 = 120-15;
     while(temp0 > 0){--temp0;tick();}
     VDP_clearPlane(BG_A, TRUE);
-    VDP_setTextPalette(PAL3);
-    kris = SPR_addSpriteSafe(&spr_kris, 0, 0, TILE_ATTR(PAL1, 1, FALSE, FALSE));
-    PAL_setPalette(PAL1, spr_kris.palette->data, CPU);
-    PAL_setPalette(PAL2, spr_susie.palette->data, CPU);
-    PAL_setPalette(PAL3, spr_ralsei.palette->data, CPU);
-    if(susie_in_party){
-        susie = SPR_addSpriteSafe(&spr_susie, 0, 0, TILE_ATTR(PAL2, 1, FALSE, FALSE));
-        SPR_setAlwaysOnTop(susie, TRUE);
-    }
-    if(ralsei_in_party){
-        ralsei = SPR_addSpriteSafe(&spr_ralsei, 0, 0, TILE_ATTR(PAL3, 1, FALSE, FALSE));
-        SPR_setAlwaysOnTop(ralsei, TRUE);
-    }
+    VDP_setTextPalette(PAL2);
+    put_sprs();
     SPR_setAlwaysOnTop(kris, TRUE);
-    //battle_logic();
+    battle_logic();
     playCutscences(1);
     while(TRUE){
         pad_state = JOY_readJoypad(JOY_1);
-        door_collision();
-        set_scroll();
         if(pad_state & BUTTON_LEFT){
-            kris_face = 0;
             kris_postion[0]-=1;
             if(pad_state & BUTTON_B) kris_postion[0]-=1;
             SPR_setHFlip(kris, TRUE);
-            SPR_setAnim(kris, 4-world*3);
+            kris_fliped=TRUE;
+            kris_face=4;
         }
         else if(pad_state & BUTTON_RIGHT){
-            kris_face = 1;
             kris_postion[0]+=1;
             if(pad_state & BUTTON_B) kris_postion[0]+=1;
             SPR_setHFlip(kris, FALSE);
-            SPR_setAnim(kris, 4-world*3);
+            kris_fliped=FALSE;
+            kris_face=4;
         }
         if(pad_state & BUTTON_UP){
-            kris_face = 2;
             kris_postion[1]-=1;
             if(pad_state & BUTTON_B) kris_postion[1]-=1;
             SPR_setHFlip(kris, FALSE);
-            SPR_setAnim(kris, 5-world*3);
+            kris_fliped=FALSE;
+            kris_face=5;
         }
         else if(pad_state & BUTTON_DOWN){
-            kris_face = 3;
             kris_postion[1]+=1;
             if(pad_state & BUTTON_B) kris_postion[1]+=1;
             SPR_setHFlip(kris, FALSE);
-            SPR_setAnim(kris, 3-world*3);
+            kris_fliped=FALSE;
+            kris_face=3;
         }
-        if(pad_state & BUTTON_C) pause_menu();
-        SPR_setFrame(kris, main_character_frames[kris_frame]);
+        //if(pad_state & BUTTON_C) pause_menu();
         if(!(pad_state & BUTTON_DIR)){
-            kris_frame = 0;
-            kris_delay = 0;
-        }else play_kris_anim();
-        SPR_setPosition(kris, kris_postion[0]-2-planescrollx, kris_postion[1]-planescrolly);
-        //face: 0 left 1 right 2 up 3 down
-        if(ralsei_in_party){
-            if(kris_face==0){
-                temp0 = kris_postion[0]+25;
-                temp1 = kris_postion[1];
-            }
-            if(kris_face==1){
-                temp0 = kris_postion[0]-25;
-                temp1 = kris_postion[1];
-            }
-            if(kris_face==2){
-                temp0 = kris_postion[0];
-                temp1 = kris_postion[1]+25;
-            }
-            if(kris_face==3){
-                temp0 = kris_postion[0];
-                temp1 = kris_postion[1]-25;
-            }
-            if(pad_state & BUTTON_DIR){
-                play_ralsei_anim();
+            SPR_setAnim(kris, kris_face-world*3+6);
+            SPR_setAnim(ralsei, ralsei_face+3);
+            SPR_setAnim(susie, susie_face-world*3+6);
+        }else {
+            SPR_setAnim(kris, kris_face-world*3);
+            door_collision();
+            set_scroll();
+            SPR_setPosition(kris, kris_postion[0]-2-planescrollx, kris_postion[1]-planescrolly);
+            //face: 0 left 1 right 2 up 3 down
+            if(ralsei_in_party){
+                if(kris_face==4&&kris_fliped){
+                    temp0 = kris_postion[0]+25;
+                    temp1 = kris_postion[1];
+                }
+                if(kris_face==4&&(!kris_fliped)){
+                    temp0 = kris_postion[0]-25;
+                    temp1 = kris_postion[1];
+                }
+                if(kris_face==5){
+                    temp0 = kris_postion[0];
+                    temp1 = kris_postion[1]+25;
+                }
+                if(kris_face==3){
+                    temp0 = kris_postion[0];
+                    temp1 = kris_postion[1]-25;
+                }
                 if(ralsei_postion[0]>temp0){
                     SPR_setHFlip(ralsei, TRUE);
                     ralsei_postion[0]-=1;
                     if(pad_state & BUTTON_B) ralsei_postion[0]-=1;
-                    SPR_setAnim(ralsei, 1);
+                    ralsei_face = 1;
                 }
                 if(ralsei_postion[0]<temp0){
                     SPR_setHFlip(ralsei, FALSE);
                     ralsei_postion[0]+=1;
                     if(pad_state & BUTTON_B) ralsei_postion[0]+=1;
-                    SPR_setAnim(ralsei, 1);
+                    ralsei_face = 1;
                 }
                 if(ralsei_postion[1]>temp1){
                     SPR_setHFlip(ralsei, FALSE);
                     ralsei_postion[1]-=1;
                     if(pad_state & BUTTON_B) ralsei_postion[1]-=1;
-                    SPR_setAnim(ralsei, 2);
+                    ralsei_face = 2;
                 }
                 if(ralsei_postion[1]<temp1){
                     SPR_setHFlip(ralsei, FALSE);
                     ralsei_postion[1]+=1;
                     if(pad_state & BUTTON_B) ralsei_postion[1]+=1;
-                    SPR_setAnim(ralsei, 0);
+                    ralsei_face = 0;
                 }
-            }else ralsei_frame = 0;
-            SPR_setFrame(ralsei, main_character_frames[ralsei_frame]);
-            SPR_setPosition(ralsei, ralsei_postion[0]-planescrollx, ralsei_postion[1]-6-planescrolly);
-        }
-        if(susie_in_party){
-            if(kris_face==0){
-                temp0 = kris_postion[0]+50;
-                temp1 = kris_postion[1];
+                SPR_setAnim(ralsei, ralsei_face);
+                SPR_setPosition(ralsei, ralsei_postion[0]-planescrollx, ralsei_postion[1]-6-planescrolly);
             }
-            if(kris_face==1){
-                temp0 = kris_postion[0]-50;
-                temp1 = kris_postion[1];
-            }
-            if(kris_face==2){
-                temp0 = kris_postion[0];
-                temp1 = kris_postion[1]+50;
-            }
-            if(kris_face==3){
-                temp0 = kris_postion[0];
-                temp1 = kris_postion[1]-50;
-            }
-            if(pad_state & BUTTON_DIR){
-                play_susie_anim();
+            if(susie_in_party){
+                if(kris_face==4&&kris_fliped){
+                    temp0 = kris_postion[0]+50;
+                    temp1 = kris_postion[1];
+                }
+                if(kris_face==4&&(!kris_fliped)){
+                    temp0 = kris_postion[0]-50;
+                    temp1 = kris_postion[1];
+                }
+                if(kris_face==5){
+                    temp0 = kris_postion[0];
+                    temp1 = kris_postion[1]+50;
+                }
+                if(kris_face==3){
+                    temp0 = kris_postion[0];
+                    temp1 = kris_postion[1]-50;
+                }
                 if(susie_postion[0]>temp0){
                     SPR_setHFlip(susie, TRUE);
                     susie_postion[0]-=1;
                     if(pad_state & BUTTON_B) susie_postion[0]-=1;
-                    SPR_setAnim(susie, 4-world*3);
+                    susie_face = 4;
                 }
                 if(susie_postion[0]<temp0){
                     SPR_setHFlip(susie, FALSE);
                     susie_postion[0]+=1;
                     if(pad_state & BUTTON_B) susie_postion[0]+=1;
-                    SPR_setAnim(susie, 4-world*3);
+                    susie_face = 4;
                 }
                 if(susie_postion[1]>temp1){
                     SPR_setHFlip(susie, FALSE);
                     susie_postion[1]-=1;
                     if(pad_state & BUTTON_B) susie_postion[1]-=1;
-                    SPR_setAnim(susie, 5-world*3);
+                    susie_face = 5;
                 }
                 if(susie_postion[1]<temp1){
                     SPR_setHFlip(susie, FALSE);
                     susie_postion[1]+=1;
                     if(pad_state & BUTTON_B) susie_postion[1]+=1;
-                    SPR_setAnim(susie, 3-world*3);
+                    susie_face = 3;
                 }
-            }else susie_frame = 0;
-            SPR_setFrame(susie, main_character_frames[susie_frame]);
-            SPR_setPosition(susie, susie_postion[0]-planescrollx, susie_postion[1]-7-planescrolly);
+                SPR_setAnim(susie, susie_face-world*3);
+                SPR_setPosition(susie, susie_postion[0]-planescrollx, susie_postion[1]-7-planescrolly);
+            }
         }
         SPR_update();
         tick();
